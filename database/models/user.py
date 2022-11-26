@@ -1,4 +1,4 @@
-from database import metadata
+from database.database import metadata
 
 from sqlalchemy import Table, Column, Integer, String
 

@@ -1,6 +1,6 @@
 from sqlalchemy import Table, Column, Integer, String, Float
 
-from database import metadata
+from database.database import metadata
 
 user = Table(
     "tamagochies",

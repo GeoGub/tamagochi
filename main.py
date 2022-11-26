@@ -1,16 +1,8 @@
-from pydantic import BaseModel, validator, ValidationError
+from entities.base_entity import Tamagochi
+from entities.console import Console
 
 
-class Foo(BaseModel):
-    name: str
-    bar: int
-    baz: int
+pet = Tamagochi()
+console = Console(pet)
 
-    def add_one(self):
-        self.bar += 1
-
-
-
-t = Foo(name="Misha", bar=1, baz=2)
-t.add_one()
-print(t.bar)
+console.run()
