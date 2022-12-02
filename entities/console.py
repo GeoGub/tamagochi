@@ -1,16 +1,36 @@
 from os import system
 import asyncio
 import aioconsole
+import aioredis
+from rq import Queue
+import json
 
 import random
+from datetime import datetime, timedelta
 
-from .base_entity import Tamagochi
+from base_entity import Tamagochi
+from publisher import publish
 
 
 class Console:
 
     def __init__(self, pet: Tamagochi) -> None:
         self.pet = pet
+        self.fatigue = {
+            "action": "s",
+            "value": -10,
+            "time": timedelta(seconds=10)
+        }
+        self.age = {
+            "action": "a",
+            "time": timedelta(seconds=30)
+        }
+        self.hungry = {
+            "action": "h",
+            "value": -10,
+            "time": timedelta(seconds=20)
+        }
+
 
     def clear(self) -> None:
         system("cls || clear")
@@ -35,26 +55,32 @@ class Console:
                 "s: Sleep; "\
                 "e: Eat; "
             )
-            self.check_command(command)
+            self.check_command(command, -10)
             self.clear()
             self.show_pet()
             
-
+    # Доделать redis listner
     async def redis_listner(self) -> None:
+        pubsub = self.redis.pubsub()
+        await pubsub.psubscribe("channel:1")
         while True:
-            # print("listen reids")
+            message = await pubsub.get_message(ignore_subscribe_messages=True)
+            if message is not None:
+                self.check_command(message)
+            else:
+                print("wait")
             await asyncio.sleep(1)
 
-    def run(self) -> None:
-        ioloop = asyncio.get_event_loop()
-        tasks = [
-                ioloop.create_task(self.keyboard_listner()), 
-                ioloop.create_task(self.redis_listner())
-            ]
-        wait_tasks = asyncio.wait(tasks)
-        while True:
-            self.clear()
-            self.show_pet()
-            self.keyboard_listner()
-            ioloop.run_until_complete(wait_tasks)
-            input()
+    async def run(self) -> None:
+        self.async_redis = await aioredis.from_url("redis://localhost")
+        self.rq = Queue("high", connection=self.async_redis)
+        self.rq.enqueue_in(
+            self.fatigue["time"],
+            publish,
+            self.fatigue["action"],
+            self.fatigue["value"]
+        )
+        self.clear()
+        self.show_pet()
+        await asyncio.gather(self.keyboard_listner(), self.redis_listner())
+
