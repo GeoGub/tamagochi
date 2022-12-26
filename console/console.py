@@ -3,6 +3,7 @@ import asyncio
 import aioconsole
 
 import json
+import time
 
 from entities.base_entity import Tamagochi
 from database.database import async_redis
@@ -14,48 +15,72 @@ class Console:
         self.pet = pet
         self.commands = "s: Sleep; e: Eat;"
 
-    def clear(self) -> None:
-        system("cls || clear")
-
     def show_pet(self) -> None:
+        system("cls || clear")
         print(self.pet.image)
         print(self.pet)
+        print(self.commands)
 
-    def update_needs(self, need: dict):
+    async def update_needs(self, need: dict):
+        self.show_pet()
+        if self.pet.busy is True:
+            return
         match need["command"]:
             case "s":
-                self.pet.fatigue += need["value"]
+                self.pet.busy = True
+                await asyncio.sleep(20)
+                self.pet.fatigue -= need["value"]
+                self.pet.busy = False
             case "e":
-                self.pet.hungry += need["value"]
-        self.clear()
+                self.pet.hungry -= need["value"]
         self.show_pet()
 
     async def keyboard_listner(self) -> None:
         while True:
-            command: str = await aioconsole.ainput(self.commands)
+            command: str = await aioconsole.ainput()
             need = {
-                "command": command.lower(),
-                "value": -10
+                "command": command
             }
-            self.update_needs(need)
-            self.clear()
+            match command:
+                case "s":
+                    need["value"] = 100
+                case "e":
+                    need["value"] = 15
+
+            await self.update_needs(need)
+            self.show_pet()
+    
+    async def fatigue_listner(self) -> None:
+        while True:
+            await asyncio.sleep(self.pet.timedelta_fatigue)
+            if self.pet.busy:
+                continue
+            self.pet.fatigue += 5
             self.show_pet()
 
-    async def redis_listner(self) -> None:
-        pubsub = async_redis.pubsub()
-        await pubsub.psubscribe("channel:1")
+    async def hungry_listner(self) -> None:
         while True:
-            message = await pubsub.get_message(ignore_subscribe_messages=True)
-            if message is not None:
-                need: bytes = message["data"]
-                self.update_needs(json.loads(need.decode()))
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(self.pet.timedelta_hungry)
+            if self.pet.busy:
+                continue
+            self.pet.hungry += 5
+            self.show_pet()
+
+    async def regeniration_listner(self) -> None:
+        while True:
+            await asyncio.sleep(self.pet.timedelta_regeniration)
+            if self.pet.hungry != 100 and self.pet.fatigue != 100:
+                self.pet.hp += 2
+                self.show_pet()
 
     async def run(self) -> None:
-        self.clear()
         self.show_pet()
-        # await asyncio.gather(self.keyboard_listner())
-        await asyncio.gather(self.keyboard_listner(), self.redis_listner())
+        await asyncio.gather(
+            self.keyboard_listner(), 
+            self.fatigue_listner(), 
+            self.hungry_listner(),
+            self.regeniration_listner()
+        )
 
 if __name__ == "__main__":
     tamagochi = Tamagochi()

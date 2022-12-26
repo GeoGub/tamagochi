@@ -6,23 +6,20 @@ class Tamagochi():
         self._hungry: int = 70
         self._fatigue: int = 70 # Усталость
         self._age: int = 0
-        self._needs = {
-            "e": self._hungry,
-            "s": self._fatigue,
-        }
+        self.timedelta_fatigue: int = 15
+        self.timedelta_hungry: int = 5
+        self.timedelta_regeniration: int = 10
         self._image: str = "*****\n ***\n  *  "
+        self.busy: bool = False
 
     def check_attribute_value(self, attribute, value: int) -> int:
         attribute = value
         if attribute < 0:
             return 0
         elif attribute > 100:
+            self.hp -= 5
             return 100
         return attribute
-
-    @property
-    def needs(self):
-        return self._needs
 
     @property
     def hp(self) -> int:
