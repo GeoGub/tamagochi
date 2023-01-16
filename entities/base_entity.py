@@ -1,6 +1,12 @@
-class Tamagochi():
+from redis import Redis
+from rq import Queue
+import pickle
 
-    def __init__(self) -> None:
+from typing import Union
+
+class Tamagotchi():
+
+    def __init__(self, user_id: Union(str, None) = None) -> None:
         self._name: str = "tamagoch"
         self._hp: int = 100
         self._hungry: int = 70
@@ -11,6 +17,7 @@ class Tamagochi():
         self.timedelta_regeniration: int = 10
         self._image: str = "*****\n ***\n  *  "
         self.busy: bool = False
+        self._user_id = user_id
 
     def check_attribute_value(self, attribute, value: int) -> int:
         attribute = value
@@ -20,6 +27,10 @@ class Tamagochi():
             self.hp -= 5
             return 100
         return attribute
+
+    @property
+    def user_id(self) -> str:
+        return self._user_id
 
     @property
     def hp(self) -> int:
@@ -62,7 +73,7 @@ class Tamagochi():
     def image(self) -> str:
         return self._image
 
-    def generate_attr_line(self, value: int | float, ratio: int = 10) -> str:
+    def generate_attr_line(self, value: Union(int, float), ratio: int = 10) -> str:
         return "".join(["+" for _ in range(round(value / ratio))])
 
     def __str__(self) -> str:
@@ -73,6 +84,9 @@ class Tamagochi():
                f"FATIGUE: [{fatigue_line}] {self.fatigue} | AGE: {self.age}"
 
 if __name__ == "__main__":
-    tama = Tamagochi()
-    print(tama)
-    tama.hungry += 10
+    tama = Tamagotchi()
+    redis = Redis("localhost")
+    print(redis.ping())
+    redis.set("2", pickle.dumps(tama))
+    t = pickle.loads(redis.get("2"))
+    print(t)

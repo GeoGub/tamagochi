@@ -2,16 +2,11 @@ from os import system
 import asyncio
 import aioconsole
 
-import json
-import time
-
-from entities.base_entity import Tamagochi
-from database.database import async_redis
+from entities.base_entity import Tamagotchi
 
 
 class Console:
-
-    def __init__(self, pet: Tamagochi) -> None:
+    def __init__(self, pet: Tamagotchi) -> None:
         self.pet = pet
         self.commands = "s: Sleep; e: Eat;"
 
@@ -83,6 +78,6 @@ class Console:
         )
 
 if __name__ == "__main__":
-    tamagochi = Tamagochi()
+    tamagochi = Tamagotchi()
     console = Console(tamagochi)
 
