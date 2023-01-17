@@ -6,7 +6,7 @@ from typing import Union
 
 class Tamagotchi():
 
-    def __init__(self, user_id: Union(str, None) = None) -> None:
+    def __init__(self, user_id: Union[str, None] = None) -> None:
         self._name: str = "tamagoch"
         self._hp: int = 100
         self._hungry: int = 70
@@ -73,7 +73,7 @@ class Tamagotchi():
     def image(self) -> str:
         return self._image
 
-    def generate_attr_line(self, value: Union(int, float), ratio: int = 10) -> str:
+    def generate_attr_line(self, value: Union[int, float], ratio: int = 10) -> str:
         return "".join(["+" for _ in range(round(value / ratio))])
 
     def __str__(self) -> str:
